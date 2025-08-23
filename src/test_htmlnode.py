@@ -1,6 +1,7 @@
 import unittest
 
-from htmlnode import HTMLNode, LeafNode
+from htmlnode import HTMLNode, LeafNode, ParentNode
+from textnode import TextNode, TextType
 
 class TestHTMLNode(unittest.TestCase):
     def test_repr(self):
@@ -28,6 +29,37 @@ class TestHTMLNode(unittest.TestCase):
         leaf3 = LeafNode(tag=None, value=None)
         with self.assertRaises(ValueError):
             leaf3.to_html()
+        
+    def test_to_html_with_children(self):
+        child_node = LeafNode("span", "child")
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(parent_node.to_html(), "<div><span>child</span></div>")
+
+    def test_to_html_with_grandchildren(self):
+        grandchild_node = LeafNode("b", "grandchild")
+        child_node = ParentNode("span", [grandchild_node])
+        parent_node = ParentNode("div", [child_node])
+        self.assertEqual(
+            parent_node.to_html(),
+            "<div><span><b>grandchild</b></span></div>",
+        )
+
+    def test_text(self):
+        node1 = TextNode("This is a text node", TextType.TEXT)
+        html_node1 = TextNode.text_node_to_html_node(node1)
+        self.assertEqual(html_node1.tag, None)
+        self.assertEqual(html_node1.value, "This is a text node")
+
+        node2 = TextNode("This is bold text", TextType.BOLD)
+        html_node2 = TextNode.text_node_to_html_node(node2)
+        self.assertEqual(html_node2.tag, "b")
+        self.assertEqual(html_node2.value, "This is bold text")
+
+        node3 = TextNode("This is a link", TextType.LINK, "http://example.com")
+        html_node3 = TextNode.text_node_to_html_node(node3)
+        self.assertEqual(html_node3.tag, "a")
+        self.assertEqual(html_node3.value, "This is a link")
+        
 
 if __name__ == "__main__":
     unittest.main()
