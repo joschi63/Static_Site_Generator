@@ -1,5 +1,5 @@
 import unittest
-from splitter import split_nodes_delimiter
+from splitter import split_nodes_delimiter, extract_markdown_images, extract_markdown_links
 from textnode import TextNode, TextType
 
 class TestSplitter(unittest.TestCase):
@@ -32,3 +32,19 @@ class TestSplitter(unittest.TestCase):
             split_nodes_delimiter(node4, "**", TextType.BOLD)
         self.assertTrue("End-Delimiter not found" in str(context.exception))
 
+    def test_extract_markdown_images(self):
+        matches1 = extract_markdown_images(
+            "This is text with an ![image](https://i.imgur.com/zjjcJKZ.png)"
+        )
+        self.assertListEqual([("image", "https://i.imgur.com/zjjcJKZ.png")], matches1)
+
+        matches2 = extract_markdown_links(
+            "This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)"
+        )
+        self.assertListEqual([
+            ("to boot dev", "https://www.boot.dev"),
+            ("to youtube", "https://www.youtube.com/@bootdotdev")
+        ], matches2)
+
+if __name__ == "__main__":
+    unittest.main()
