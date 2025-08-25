@@ -37,7 +37,58 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         else:
             new_nodes.append(TextNode(split, TextType.TEXT))    
     return new_nodes
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+
+    for old_nodes in old_nodes:
+
+        if old_nodes.text_type != TextType.TEXT:
+            new_nodes.append(old_nodes)
+        
+        matches = extract_markdown_images(old_nodes.text)
+        start = 0
+        for j in range(len(matches)):
+            alt_text = f"![{matches[j][0]}]"
             
+            link = matches[j][1]
+    
+        
+            for i in range(len(old_nodes.text)):
+                if old_nodes.text[i:i+len(alt_text)] == alt_text:
+                    if i > 0:
+                        
+                        new_nodes.append(TextNode(old_nodes.text[start:i], TextType.TEXT))
+                        new_nodes.append(TextNode(matches[j][0], TextType.IMAGE, link))
+                        i = i + len(alt_text) + len(link) + 2
+                        start = i
+    return new_nodes
+
+def split_nodes_links(old_nodes):
+    new_nodes = []
+
+    for old_nodes in old_nodes:
+
+        if old_nodes.text_type != TextType.TEXT:
+            new_nodes.append(old_nodes)
+        
+        matches = extract_markdown_links(old_nodes.text)
+        start = 0
+        for j in range(len(matches)):
+            alt_text = f"[{matches[j][0]}]"
+            link = matches[j][1]
+        
+            for i in range(len(old_nodes.text)):
+                if old_nodes.text[i:i+len(alt_text)] == alt_text:
+                    if i > 0:
+                        new_nodes.append(TextNode(old_nodes.text[start:i], TextType.TEXT))
+                        new_nodes.append(TextNode(matches[j][0], TextType.LINK, link))
+                        i = i + len(alt_text) + len(link) + 2
+                        start = i
+    if not new_nodes:
+        return [old_nodes]
+    return new_nodes
+        
 
 def extract_markdown_images(text):
     matches = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)", text)
@@ -51,3 +102,4 @@ def extract_markdown_links(text):
     #print(split_nodes_delimiter(TextNode("This is **bold** text", TextType.TEXT), "**", TextType.BOLD))
     #extract_markdown_images("![rick roll](https://i.imgur.com/aKaOqIh.gif)")
     #extract_markdown_links("This is text with a link [to boot dev](https://www.boot.dev) and [to youtube](https://www.youtube.com/@bootdotdev)")
+    
