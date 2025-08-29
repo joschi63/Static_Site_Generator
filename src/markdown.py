@@ -119,7 +119,7 @@ def block_tag_to_sign(block_tag):
 def text_to_children(text, parent_tag):
     
     if parent_tag == "ol":
-        text = text.remove(text[0:text.index(".")+2])
+        text = text[3:]
     else:
         text = text.strip(block_tag_to_sign(parent_tag))
 
