@@ -22,120 +22,134 @@ def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
     children = []
     for block in blocks:
-        block_type = block_to_block_type(block)
-        block_children = []
-        block.strip()
-        if block_type == BlockType.CODE:
-            code = block.strip("```").strip()
-            code = "\n".join(line.lstrip() for line in code.splitlines())
-            if not code.endswith("\n"):
-                code += "\n"
-            children.append(ParentNode(tag="pre", children=[LeafNode(tag="code", value=code)]))
-            continue
-        elif block_type == BlockType.PARAGRAPH:
-        # Zeilen zusammenfügen und überflüssige Leerzeichen entfernen
-            block = " ".join(line.strip() for line in block.split("\n"))
-            block_children.extend(text_to_children(block, block_type_to_tag(block_type, block)))
-        else:
-            for text in block.split("\n"):
-                block_children.extend(text_to_children(text, block_type_to_tag(block_type, block)))
-        children.append(ParentNode(tag=block_type_to_tag(block_type, block), children=block_children))
-    new_node = ParentNode(tag="div", children=children)
-    
-    return new_node
+        html_node = block_to_html_node(block)
+        children.append(html_node)
+    return ParentNode(tag="div", children=children)
 
 def block_to_block_type(block):
-    if block.startswith("#") or block.startswith("##") or block.startswith("###") or block.startswith("####") or block.startswith("#####") or block.startswith("######"):
+    lines = block.split("\n")
+
+    if block.startswith(("#", "##", "###", "####", "#####", "######")):
         return BlockType.HEADING
-    elif block.startswith("```") and block.endswith("```"):
+    elif len(lines) > 1 and lines[0].startswith("```") and lines[-1].startswith("```"):
         return BlockType.CODE
     elif block.startswith(">"):
+        for line in lines:
+            if not line.startswith(">"):
+                return BlockType.PARAGRAPH
         return BlockType.QUOTE
     elif block.startswith("- "):
+        for line in lines:
+            if not line.startswith("- "):
+                return BlockType.PARAGRAPH
         return BlockType.UNORDERED_LIST
-    elif block[0].isdigit() and block[1] == "." and block[2] == " ":
+    elif block.startswith("1. "):
+        i = 1
+        for line in lines:
+            if not line.startswith(f"{i}. "):
+                return BlockType.PARAGRAPH
+            i += 1
         return BlockType.ORDERED_LIST
     else:
         return BlockType.PARAGRAPH
 
+def block_to_html_node(block):
+    block_type = block_to_block_type(block)
+    if block_type == BlockType.PARAGRAPH:
+        return paragraph_to_html_node(block)
+    elif block_type == BlockType.HEADING:
+        return heading_to_html_node(block)
+    elif block_type == BlockType.CODE:
+        return code_to_html_node(block)
+    elif block_type == BlockType.QUOTE:
+        return quote_to_html_node(block)
+    elif block_type == BlockType.UNORDERED_LIST:
+        return unordered_list_to_html_node(block)
+    elif block_type == BlockType.ORDERED_LIST:
+        return ordered_list_to_html_node(block)
+    else:
+        raise Exception(f"Unknown block type: {block_type}")
 
 def markdown_to_blocks(markdown):
 
     blocks = markdown.split("\n\n")
+    filtered_blocks = []
+    for block in blocks:
+        if block == "":
+            continue
+        block = block.strip()
+        filtered_blocks.append(block)
+    return filtered_blocks
 
-    for i in range(len(blocks)):
-        blocks[i] = blocks[i].strip()
-        if not blocks[i]:
-            blocks.remove(blocks[i])
-    return blocks
+def paragraph_to_html_node(block):
+    lines = block.split("\n")
+    paragraph = " ".join(lines)
+    children = text_to_children(paragraph)
+    return ParentNode(tag="p", children=children)
 
-def block_type_to_tag(block_type, block): 
-    if block_type == BlockType.PARAGRAPH:
-        return "p"
-    elif block_type == BlockType.HEADING:
-        if block.startswith("######"):
-            return "h6"
-        elif block.startswith("#####"):
-            return "h5"
-        elif block.startswith("####"):
-            return "h4"
-        elif block.startswith("###"):
-            return "h3"
-        elif block.startswith("##"):
-            return "h2"
-        elif block.startswith("#"):
-            return "h1"
-    elif block_type == BlockType.CODE:
-        return "code"
-    elif block_type == BlockType.QUOTE:
-        return "blockquote"
-    elif block_type == BlockType.UNORDERED_LIST:
-        return "ul"
-    elif block_type == BlockType.ORDERED_LIST:
-        return "ol"
-    else:
-        raise ValueError(f"Unknown block type: {block_type}")
+def heading_to_html_node(block):
+    level = 0
+    for char in block:
+        if char == "#":
+            level += 1
+        else:
+            break
+    if level + 1 >= len(block):
+        raise ValueError(f"Invalid heading level: {level}")
+    text = block[level + 1 :]
+    children = text_to_children(text)
+    return ParentNode(tag=f"h{level}", children=children)
 
-def block_tag_to_sign(block_tag):
-    if block_tag == "h1":
-        return "# "
-    elif block_tag == "h2":
-        return "## "
-    elif block_tag == "h3":
-        return "### "
-    elif block_tag == "h4":
-        return "#### "
-    elif block_tag == "h5":
-        return "##### "
-    elif block_tag == "h6":
-        return "###### "
-    elif block_tag == "blockquote":
-        return "> "
-    elif block_tag == "ul":
-        return "- "
-    else:
-        return ""
+def code_to_html_node(block):
+    if not block.startswith("```") or not block.endswith("```"):
+        raise ValueError("Invalid code block")
+    text = block[4:-3].strip()
+    raw_text_node = TextNode(text, TextType.TEXT)
+    child = TextNode.text_node_to_html_node(raw_text_node)
+    code = ParentNode(tag="code", children=[child])
+    return ParentNode(tag="pre", children=[code])
 
-def text_to_children(text, parent_tag):
-    
-    if parent_tag == "ol":
-        text = text[3:]
-    else:
-        text = text.strip(block_tag_to_sign(parent_tag))
-        text.strip()
+def ordered_list_to_html_node(block):
+    items = block.split("\n")
+    html_items = []
+    for item in items:
+        text = item[3:]
+        children = text_to_children(text)
+        html_items.append(ParentNode(tag="li", children=children))
+    return ParentNode(tag="ol", children=html_items)
+
+def unordered_list_to_html_node(block):
+    items = block.split("\n")
+    html_items = []
+    for item in items:
+        text = item[2:]
+        children = text_to_children(text)
+        html_items.append(ParentNode(tag="li", children=children))
+    return ParentNode(tag="ul", children=html_items)
+
+def quote_to_html_node(block):
+    lines = block.split("\n")
+    new_lines = []
+    for line in lines:
+        if not line.startswith(">"):
+            raise ValueError("Invalid quote block")
+        new_lines.append(line.lstrip(">").strip())
+    content = " ".join(new_lines)
+    children = text_to_children(content)
+    return ParentNode(tag="blockquote", children=children)
+
+def text_to_children(text):
+    text.strip()
 
     text = TextNode(text, TextType.TEXT)
     nodes = text_to_textnodes(text)
     children = []
 
-
-    for node in nodes:
-        children.append(TextNode.text_node_to_html_node(node))
-        #print(children)
-    #print(children)
-    if parent_tag == "ul" or parent_tag == "ol":
-        children = [ParentNode(tag="li", children=children)]
+    for text_node in nodes:
+        html_node = TextNode.text_node_to_html_node(text_node)
+        children.append(html_node)
     return children
+
 
 if __name__ == "__main__":
     md = md = """

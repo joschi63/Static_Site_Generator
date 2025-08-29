@@ -8,7 +8,7 @@ def main():
     node = TextNode("This is some anchor text", TextType.LINK, "http://boot.dev")
     
     copy_content()
-    generate_page(("content/index.md"), ("template.html"), ("public/index.html"))
+    generate_pages_recursive("./content", "./template.html", "./public")
 
 def copy_content(from_p = "./static", destination = "./public", first = True, files = []):
     destination_path = os.path.join(destination)
@@ -50,6 +50,39 @@ def generate_page(from_path, template_path, dest_path):
         dest_path_f.write(template_from_path)
     else:
         dest_path_f.write(template_from_path)
+
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    dir_path_content = os.path.join(dir_path_content)
+
+    if os.path.exists(dir_path_content):
+        print(f"Reading directory {dir_path_content}")
+
+        list_of_files = os.listdir(dir_path_content)
+
+        for list_file in list_of_files:
+            full_path = os.path.join(dir_path_content, list_file)
+            if os.path.isfile(full_path):
+                print(f"Generating page for {full_path}")
+                full_path_f = open(full_path, "r")
+                
+                template_path_f = open(template_path, "r")
+                dest_dir_path_f = open(os.path.join(dest_dir_path, list_file.replace(".md", ".html")), "w")
+                content_md = full_path_f.read()
+
+                title = extract_title(content_md)
+                html = markdown_to_html_node(content_md).to_html()
+               
+                template_from_path = template_path_f.read()
+                template_from_path = template_from_path.replace("{{ Content }}", html)
+                template_from_path = template_from_path.replace("{{ Title }}", title)
+
+                dest_dir_path_f.write(template_from_path)
+            elif os.path.isdir(full_path):
+                print
+                new_dest_dir_path = os.path.join(dest_dir_path, list_file)
+                if not os.path.exists(new_dest_dir_path):
+                    os.makedirs(new_dest_dir_path)
+                generate_pages_recursive(full_path, template_path, new_dest_dir_path)
 
 if __name__ == "__main__":
     main()
