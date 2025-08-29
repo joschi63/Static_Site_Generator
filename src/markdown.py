@@ -24,7 +24,7 @@ def markdown_to_html_node(markdown):
     for block in blocks:
         block_type = block_to_block_type(block)
         block_children = []
-
+        block.strip()
         if block_type == BlockType.CODE:
             code = block.strip("```").strip()
             code = "\n".join(line.lstrip() for line in code.splitlines())
@@ -98,19 +98,19 @@ def block_type_to_tag(block_type, block):
 
 def block_tag_to_sign(block_tag):
     if block_tag == "h1":
-        return "#"
+        return "# "
     elif block_tag == "h2":
-        return "##"
+        return "## "
     elif block_tag == "h3":
-        return "###"
+        return "### "
     elif block_tag == "h4":
-        return "####"
+        return "#### "
     elif block_tag == "h5":
-        return "#####"
+        return "##### "
     elif block_tag == "h6":
-        return "######"
+        return "###### "
     elif block_tag == "blockquote":
-        return ">"
+        return "> "
     elif block_tag == "ul":
         return "- "
     else:
@@ -122,6 +122,7 @@ def text_to_children(text, parent_tag):
         text = text[3:]
     else:
         text = text.strip(block_tag_to_sign(parent_tag))
+        text.strip()
 
     text = TextNode(text, TextType.TEXT)
     nodes = text_to_textnodes(text)
