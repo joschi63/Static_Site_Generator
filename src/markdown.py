@@ -11,6 +11,13 @@ class BlockType(Enum):
     UNORDERED_LIST = "UnorderedList"
     ORDERED_LIST = "OrderedList"
 
+def extract_title(markdown):
+    lines = markdown.split("\n")
+    for line in lines:
+        if line.startswith("# "):
+            return line[2:].strip()
+    return "No Title Found"
+
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
     children = []

@@ -1,5 +1,5 @@
 import unittest
-from markdown import markdown_to_blocks, markdown_to_html_node
+from markdown import markdown_to_blocks, markdown_to_html_node, extract_title
 from markdown import block_to_block_type, BlockType
 
 class TestMarkdown(unittest.TestCase):
@@ -75,3 +75,15 @@ This is the same paragraph on a new line
             html,
             "<div><pre><code>This is text that _should_ remain\nthe **same** even with inline stuff\n</code></pre></div>",
         )
+
+    def test_extract_title(self):
+        md = """# This is the title
+        
+This is some paragraph text.
+"""
+        title = extract_title(md)
+        self.assertEqual(title, "This is the title")
+
+        md_no_title = """This is some paragraph text without a title."""
+        title_no_title = extract_title(md_no_title)
+        self.assertEqual(title_no_title, "No Title Found")
