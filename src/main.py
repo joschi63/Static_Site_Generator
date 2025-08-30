@@ -2,15 +2,16 @@ from textnode import TextNode, TextType
 from markdown import markdown_to_html_node, extract_title
 import os
 import shutil
+import sys
 from pathlib import Path
 
 def main():
     node = TextNode("This is some anchor text", TextType.LINK, "http://boot.dev")
-    
+    basepath = sys.argv[0]
     copy_content()
-    generate_pages_recursive("./content", "./template.html", "./public")
+    generate_pages_recursive("./content", "./template.html", "./docs", basepath)
 
-def copy_content(from_p = "./static", destination = "./public", first = True, files = []):
+def copy_content(from_p = "./static", destination = "./docs", first = True, files = []):
     destination_path = os.path.join(destination)
     from_path = os.path.join(from_p)
     if first and os.path.exists(destination_path):
@@ -51,7 +52,7 @@ def generate_page(from_path, template_path, dest_path):
     else:
         dest_path_f.write(template_from_path)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath = "/"):
     dir_path_content = os.path.join(dir_path_content)
 
     if os.path.exists(dir_path_content):
@@ -75,6 +76,8 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
                 template_from_path = template_path_f.read()
                 template_from_path = template_from_path.replace("{{ Content }}", html)
                 template_from_path = template_from_path.replace("{{ Title }}", title)
+                template_from_path = template_from_path.replace('href="/', f'href="{basepath}')
+                template_from_path = template_from_path.replace('src="/', f'src="{basepath}')
 
                 dest_dir_path_f.write(template_from_path)
             elif os.path.isdir(full_path):
