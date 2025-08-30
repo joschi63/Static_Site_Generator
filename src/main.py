@@ -87,7 +87,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
                 new_dest_dir_path = os.path.join(dest_dir_path, list_file)
                 if not os.path.exists(new_dest_dir_path):
                     os.makedirs(new_dest_dir_path)
-                generate_pages_recursive(full_path, template_path, new_dest_dir_path)
+                generate_pages_recursive(full_path, template_path, new_dest_dir_path, basepath)
 
 if __name__ == "__main__":
     main()
