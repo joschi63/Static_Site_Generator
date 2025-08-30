@@ -7,7 +7,9 @@ from pathlib import Path
 
 def main():
     node = TextNode("This is some anchor text", TextType.LINK, "http://boot.dev")
-    basepath = sys.argv[0]
+    basepath = "/"
+    if len(sys.argv) > 1:
+        basepath = sys.argv[1]
     copy_content()
     generate_pages_recursive("./content", "./template.html", "./docs", basepath)
 
@@ -52,7 +54,7 @@ def generate_page(from_path, template_path, dest_path):
     else:
         dest_path_f.write(template_from_path)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath = "/"):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     dir_path_content = os.path.join(dir_path_content)
 
     if os.path.exists(dir_path_content):
