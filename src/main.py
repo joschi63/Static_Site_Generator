@@ -78,7 +78,7 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
                 template_from_path = template_path_f.read()
                 template_from_path = template_from_path.replace("{{ Content }}", html)
                 template_from_path = template_from_path.replace("{{ Title }}", title)
-                template_from_path = template_from_path.replace('href="/', f'href="{basepath}/index.html')
+                template_from_path = template_from_path.replace('href="/', f'href="{basepath}index.html')
                 template_from_path = template_from_path.replace('src="/', f'src="{basepath}')
 
                 dest_dir_path_f.write(template_from_path)
