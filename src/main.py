@@ -33,61 +33,41 @@ def copy_content(from_p = "./static", destination = "./docs", first = True, file
                 os.mkdir(dir)
                 copy_content(from_p=from_p + "/" + list_file, destination=dir, first = False, files=files)
             
-def generate_page(from_path, template_path, dest_path):
-    print(f"Generating page from {from_path} to {dest_path} using template {template_path}")
-    from_path_f = open(from_path, "r")
-    template_path_f = open(template_path, "r")
-    dest_path_f = open(dest_path, "w")
-    
-    content_from_path = from_path_f.read()
-    html = markdown_to_html_node(content_from_path).to_html()
-
-    title = extract_title(content_from_path)
-
-    template_from_path = template_path_f.read()
-    template_from_path = template_from_path.replace("{{ Content }}", html)
-    template_from_path = template_from_path.replace("{{ Title }}", title)
-    
-    if not os.path.exists(os.path.dirname(dest_path)):
-        os.makedirs(os.path.dirname(dest_path))
-        dest_path_f.write(template_from_path)
-    else:
-        dest_path_f.write(template_from_path)
-
 def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
-    dir_path_content = os.path.join(dir_path_content)
+    for filename in os.listdir(dir_path_content):
+        from_path = os.path.join(dir_path_content, filename)
+        dest_path = os.path.join(dest_dir_path, filename)
+        if os.path.isfile(from_path):
+            dest_path = Path(dest_path).with_suffix(".html")
+            generate_page(from_path, template_path, dest_path, basepath)
+        else:
+            generate_pages_recursive(from_path, template_path, dest_path, basepath)
 
-    if os.path.exists(dir_path_content):
-        print(f"Reading directory {dir_path_content}")
 
-        list_of_files = os.listdir(dir_path_content)
+def generate_page(from_path, template_path, dest_path, basepath):
+    print(f" * {from_path} {template_path} -> {dest_path}")
+    from_file = open(from_path, "r")
+    markdown_content = from_file.read()
+    from_file.close()
 
-        for list_file in list_of_files:
-            full_path = os.path.join(dir_path_content, list_file)
-            if os.path.isfile(full_path):
-                print(f"Generating page for {full_path}")
-                full_path_f = open(full_path, "r")
-                
-                template_path_f = open(template_path, "r")
-                dest_dir_path_f = open(os.path.join(dest_dir_path, list_file.replace(".md", ".html")), "w")
-                content_md = full_path_f.read()
+    template_file = open(template_path, "r")
+    template = template_file.read()
+    template_file.close()
 
-                title = extract_title(content_md)
-                html = markdown_to_html_node(content_md).to_html()
-               
-                template_from_path = template_path_f.read()
-                template_from_path = template_from_path.replace("{{ Content }}", html)
-                template_from_path = template_from_path.replace("{{ Title }}", title)
-                template_from_path = template_from_path.replace('href="/', f'href="{basepath}')
-                template_from_path = template_from_path.replace('src="/', f'src="{basepath}')
+    node = markdown_to_html_node(markdown_content)
+    html = node.to_html()
 
-                dest_dir_path_f.write(template_from_path)
-            elif os.path.isdir(full_path):
-                print
-                new_dest_dir_path = os.path.join(dest_dir_path, list_file)
-                if not os.path.exists(new_dest_dir_path):
-                    os.makedirs(new_dest_dir_path)
-                generate_pages_recursive(full_path, template_path, new_dest_dir_path, basepath)
+    title = extract_title(markdown_content)
+    template = template.replace("{{ Title }}", title)
+    template = template.replace("{{ Content }}", html)
+    template = template.replace('href="/', 'href="' + basepath)
+    template = template.replace('src="/', 'src="' + basepath)
+
+    dest_dir_path = os.path.dirname(dest_path)
+    if dest_dir_path != "":
+        os.makedirs(dest_dir_path, exist_ok=True)
+    to_file = open(dest_path, "w")
+    to_file.write(template)
 
 if __name__ == "__main__":
     main()
