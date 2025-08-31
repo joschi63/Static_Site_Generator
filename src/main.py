@@ -15,6 +15,7 @@ default_basepath = "/"
 def main():
     basepath = default_basepath
     if len(sys.argv) > 1:
+        print(sys.argv)
         basepath = sys.argv[1]
 
     print("Deleting public directory...")
@@ -68,7 +69,9 @@ def generate_page(from_path, template_path, dest_path, basepath):
     template = template.replace("{{ Title }}", title)
     template = template.replace("{{ Content }}", html)
     template = template.replace('href="/', 'href="' + basepath)
+    print(basepath + "link")
     template = template.replace('src="/', 'src="' + basepath)
+    print(basepath + "image")
 
     dest_dir_path = os.path.dirname(dest_path)
     if dest_dir_path != "":
